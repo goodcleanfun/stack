@@ -1,0 +1,19 @@
+{
+    "name": "linked_list",
+    "version": "0.0.0",
+    "repo": "goodcleanfun/linked_list",
+    "description": "A memory-pooled generic linked-list implementation, including lock-free thread-safety using atomics if specified",
+    "keywords": [],
+    "license": "MIT",
+    "development": {
+      "silentbicycle/greatest": "*"
+    },
+    "dependencies": {
+      "goodcleanfun/memory_pool": "*",
+      "goodcleanfun/threading": "*"
+    },
+    "src": [
+      "src/linked_list.h"
+    ]
+    
+  }
