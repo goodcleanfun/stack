@@ -27,11 +27,13 @@ typedef struct LINKED_LIST_NODE {
     LINKED_LIST_TYPE value;
 } LINKED_LIST_NODE;
 
+#ifdef LINKED_LIST_THREAD_SAFE
 // Need double-wide compare-and-swap (DWCAS) for atomic linked list
 typedef struct LINKED_LIST_HEAD {
     size_t version;
     LINKED_LIST_NODE *node;
 } LINKED_LIST_HEAD;
+#endif
 
 #define LINKED_LIST_ITEM_MEMORY_POOL_NAME LINKED_LIST_TYPED(node_memory_pool)
 
@@ -54,7 +56,7 @@ typedef struct {
     _Atomic LINKED_LIST_HEAD head;
     atomic_size_t size;
     #else
-    LINKED_LIST_HEAD head;
+    LINKED_LIST_NODE *head;
     size_t size;
     #endif
     LINKED_LIST_ITEM_MEMORY_POOL_NAME *pool;
@@ -65,12 +67,12 @@ static LINKED_LIST_NAME *LINKED_LIST_FUNC(new_pool)(LINKED_LIST_ITEM_MEMORY_POOL
     LINKED_LIST_NAME *list = malloc(sizeof(LINKED_LIST_NAME));
     if (list == NULL) return NULL;
     list->pool = pool;
-    LINKED_LIST_HEAD head = (LINKED_LIST_HEAD){0, (LINKED_LIST_NODE *)NULL};
     #ifdef LINKED_LIST_THREAD_SAFE
+    LINKED_LIST_HEAD head = (LINKED_LIST_HEAD){0, (LINKED_LIST_NODE *)NULL};
     atomic_init(&list->head, head);
     atomic_init(&list->size, 0);
     #else
-    list->head = head;
+    list->head = NULL;
     list->size = 0;
     #endif
     return list;
@@ -86,12 +88,12 @@ static LINKED_LIST_NAME *LINKED_LIST_FUNC(new)(void) {
         LINKED_LIST_ITEM_MEMORY_POOL_FUNC(destroy)(pool);
         return NULL;
     }
-    LINKED_LIST_HEAD head = (LINKED_LIST_HEAD){0, (LINKED_LIST_NODE *)NULL};
     #ifdef LINKED_LIST_THREAD_SAFE
+    LINKED_LIST_HEAD head = (LINKED_LIST_HEAD){0, (LINKED_LIST_NODE *)NULL};
     atomic_init(&list->head, head);
     atomic_init(&list->size, 0);
     #else
-    list->head = head;
+    list->head = NULL;
     list->size = 0;
     #endif
     return list;
@@ -111,8 +113,8 @@ bool LINKED_LIST_FUNC(push)(LINKED_LIST_NAME *list, LINKED_LIST_TYPE value) {
     } while (!atomic_compare_exchange_weak(&list->head, &old_head, new_head));
     atomic_fetch_add(&list->size, 1);
     #else
-    node->next = list->head.node;
-    list->head.node = node;
+    node->next = list->head;
+    list->head = node;
     list->size++;
     #endif
     return true;
@@ -129,12 +131,12 @@ bool LINKED_LIST_FUNC(pop)(LINKED_LIST_NAME *list, LINKED_LIST_TYPE *result) {
         new_head.version = old_head.version;
         new_head.node = old_head.node->next;
     } while (!atomic_compare_exchange_weak(&list->head, &old_head, new_head));
-    #else
-    if (list->head.node == NULL) return false;
-    LINKED_LIST_HEAD old_head = list->head;
-    list->head.node = old_head.node->next;
-    #endif
     LINKED_LIST_NODE *node = old_head.node;
+    #else
+    if (list->head == NULL) return false;
+    LINKED_LIST_NODE *node = list->head;
+    list->head = node->next;
+    #endif
     *result = node->value;
     LINKED_LIST_ITEM_MEMORY_POOL_FUNC(release)(list->pool, node);
     #ifdef LINKED_LIST_THREAD_SAFE
