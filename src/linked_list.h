@@ -88,14 +88,6 @@ static LINKED_LIST_NAME *LINKED_LIST_FUNC(new)(void) {
         LINKED_LIST_ITEM_MEMORY_POOL_FUNC(destroy)(pool);
         return NULL;
     }
-    #ifdef LINKED_LIST_THREAD_SAFE
-    LINKED_LIST_HEAD head = (LINKED_LIST_HEAD){0, (LINKED_LIST_NODE *)NULL};
-    atomic_init(&list->head, head);
-    atomic_init(&list->size, 0);
-    #else
-    list->head = NULL;
-    list->size = 0;
-    #endif
     return list;
 }
 
