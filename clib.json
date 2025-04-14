@@ -1,6 +1,6 @@
 {
     "name": "linked_list",
-    "version": "0.2.1",
+    "version": "0.2.2",
     "repo": "goodcleanfun/linked_list",
     "description": "A memory-pooled generic linked-list implementation, including lock-free thread-safety using atomics if specified",
     "keywords": [],
