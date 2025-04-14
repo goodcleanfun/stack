@@ -29,7 +29,7 @@ typedef struct {
 } id_point_t;
 
 #define NUM_THREADS 8
-#define NUM_PUSHES 500
+#define NUM_PUSHES 50000
 
 int linked_list_thread(void *arg) {
     linked_list_uint32 *list = (linked_list_uint32 *)arg;
