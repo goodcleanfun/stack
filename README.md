@@ -1,2 +1,2 @@
-# linked_list
-A memory-pooled generic linked-list implementation, including lock-free thread-safety using atomics if specified
+# stack
+A memory-pooled generic stack implementation using a singly linked list, including lock-free thread-safety using atomics if specified
