@@ -139,6 +139,55 @@ bool STACK_FUNC(pop)(STACK_NAME *list, STACK_TYPE *result) {
     return true;
 }
 
+bool STACK_FUNC(release_node)(STACK_NAME *list, STACK_NODE *node) {
+    if (list == NULL || node == NULL) return false;
+    STACK_ITEM_MEMORY_POOL_FUNC(release)(list->pool, node);
+    return true;
+}
+
+STACK_NODE *STACK_FUNC(pop_all)(STACK_NAME *list) {
+    if (list == NULL) return NULL;
+    STACK_NODE *result = NULL;
+    #ifdef STACK_THREAD_SAFE
+    STACK_HEAD old_head, new_head;
+    size_t size;
+    do {
+        old_head = atomic_load(&list->head);
+        size = atomic_load(&list->size);
+        if (old_head.node == NULL) return NULL;
+        new_head.version = old_head.version;
+        new_head.node = NULL;
+    } while (!atomic_compare_exchange_weak(&list->head, &old_head, new_head));
+    result = old_head.node;
+    atomic_fetch_sub(&list->size, size);
+    #else
+    result = list->head;
+    list->head = NULL;
+    list->size = 0;
+    #endif
+    return result;
+}
+
+bool STACK_FUNC(peek)(STACK_NAME *list, STACK_TYPE *result) {
+    if (list == NULL) return false;
+    #ifdef STACK_THREAD_SAFE
+    STACK_HEAD head = atomic_load(&list->head);
+    if (head.node == NULL) {
+        return false;
+    } else {
+        *result = head.node->value;
+    }
+    return true;
+    #else
+    if (list->head == NULL) {
+        return false;
+    } else {
+        *result = list->head->value;
+    }
+    return true;
+    #endif
+}
+
 size_t STACK_FUNC(size)(STACK_NAME *list) {
     if (list == NULL) return 0;
     #ifdef STACK_THREAD_SAFE
