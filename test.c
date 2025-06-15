@@ -77,7 +77,21 @@ TEST test_stack_multithreaded(void) {
     }
     size_t size = atomic_load(&list->size);
     ASSERT_EQ(size, NUM_THREADS * NUM_PUSHES * 3 / 4);
-
+    size_t pops = 0;
+    size_t prev_size = size;
+    uint32_t value;
+    ASSERT(stack_uint32_peek(list, &value));
+    stack_uint32_node *node = stack_uint32_pop_all(list);
+    while (node) {
+        stack_uint32_node *next = node->next;
+        stack_uint32_release_node(list, node);
+        pops++;
+        node = next;
+    }
+    size = atomic_load(&list->size);
+    ASSERT_EQ(size, 0);
+    ASSERT_EQ(pops, prev_size);
+    ASSERT_FALSE(stack_uint32_pop(list, &value));
     stack_uint32_destroy(list);
     PASS();
 }
