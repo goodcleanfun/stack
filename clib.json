@@ -1,6 +1,6 @@
 {
     "name": "stack",
-    "version": "0.3.0",
+    "version": "0.4.0",
     "repo": "goodcleanfun/stack",
     "description": "A memory-pooled generic stack implementation using a linked list, including lock-free thread-safety using atomics if specified",
     "keywords": ["stack", "linked list", "memory pool", "thread safe", "atomic"],
