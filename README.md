@@ -1,2 +1,2 @@
 # stack
-A memory-pooled generic stack implementation using a singly linked list, including lock-free thread-safety using atomics if specified
+Generic lock-free stack using a singly linked list with a memory pool for nodes. Includes thread-safe mode using C11 atomics/compare-and-swap.
