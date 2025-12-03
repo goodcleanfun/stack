@@ -14,6 +14,16 @@
 #error "STACK_TYPE must be defined"
 #endif
 
+#ifndef STACK_MALLOC
+#define STACK_MALLOC(size) malloc(size)
+#define STACK_MALLOC_DEFINED
+#endif
+
+#ifndef STACK_FREE
+#define STACK_FREE(ptr) free(ptr)
+#define STACK_FREE_DEFINED
+#endif
+
 #define STACK_CONCAT_(a, b) a ## b
 #define STACK_CONCAT(a, b) STACK_CONCAT_(a, b)
 #define STACK_FUNC(name) STACK_CONCAT(STACK_NAME, _##name)
@@ -59,14 +69,15 @@ typedef struct {
     STACK_NODE *head;
     size_t size;
     #endif
+    bool own_pool;
     STACK_ITEM_MEMORY_POOL_NAME *pool;
 } STACK_NAME;
 
 
-static STACK_NAME *STACK_FUNC(new_pool)(STACK_ITEM_MEMORY_POOL_NAME *pool) {
-    STACK_NAME *list = malloc(sizeof(STACK_NAME));
-    if (list == NULL) return NULL;
+static bool STACK_FUNC(init_pool)(STACK_NAME *list, STACK_ITEM_MEMORY_POOL_NAME *pool) {
+    if (list == NULL || pool == NULL) return false;
     list->pool = pool;
+    list->own_pool = false;
     #ifdef STACK_THREAD_SAFE
     STACK_HEAD head = (STACK_HEAD){0, (STACK_NODE *)NULL};
     atomic_init(&list->head, head);
@@ -75,17 +86,36 @@ static STACK_NAME *STACK_FUNC(new_pool)(STACK_ITEM_MEMORY_POOL_NAME *pool) {
     list->head = NULL;
     list->size = 0;
     #endif
+    return true;
+}
+
+static bool STACK_FUNC(init)(STACK_NAME *list) {
+    if (list == NULL) return false;
+    STACK_ITEM_MEMORY_POOL_NAME *pool = STACK_ITEM_MEMORY_POOL_FUNC(new)();
+    if (pool == NULL) return false;
+    if (!STACK_FUNC(init_pool)(list, pool)) {
+        STACK_ITEM_MEMORY_POOL_FUNC(destroy)(pool);
+        return false;
+    }
+    list->own_pool = true;
+    return true;
+}
+
+static STACK_NAME *STACK_FUNC(new_pool)(STACK_ITEM_MEMORY_POOL_NAME *pool) {
+    STACK_NAME *list = STACK_MALLOC(sizeof(STACK_NAME));
+    if (list == NULL) return NULL;
+    if (!STACK_FUNC(init_pool)(list, NULL)) {
+        STACK_FREE(list);
+        return NULL;
+    }
     return list;
 }
 
 static STACK_NAME *STACK_FUNC(new)(void) {
-    STACK_ITEM_MEMORY_POOL_NAME *pool = STACK_ITEM_MEMORY_POOL_FUNC(new)();
-    if (pool == NULL) {
-        return NULL;
-    }
-    STACK_NAME *list = STACK_FUNC(new_pool)(pool);
-    if (list == NULL) {
-        STACK_ITEM_MEMORY_POOL_FUNC(destroy)(pool);
+    STACK_NAME *list = STACK_MALLOC(sizeof(STACK_NAME));
+    if (list == NULL) return NULL;
+    if (!STACK_FUNC(init)(list)) {
+        STACK_FREE(list);
         return NULL;
     }
     return list;
@@ -199,8 +229,8 @@ size_t STACK_FUNC(size)(STACK_NAME *list) {
 
 void STACK_FUNC(destroy)(STACK_NAME *list) {
     if (list == NULL) return;
-    if (list->pool != NULL) {
+    if (list->pool != NULL && list->own_pool) {
         STACK_ITEM_MEMORY_POOL_FUNC(destroy)(list->pool);
     }
-    free(list);
+    STACK_FREE(list);
 }
