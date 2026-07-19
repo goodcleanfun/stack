@@ -2,18 +2,16 @@
     "name": "stack",
     "version": "0.5.0",
     "repo": "goodcleanfun/stack",
-    "description": "A memory-pooled generic stack implementation using a linked list, including lock-free thread-safety using atomics if specified",
-    "keywords": ["stack", "linked list", "memory pool", "thread safe", "atomic"],
+    "description": "A memory-pooled generic stack implementation using a linked list",
+    "keywords": ["stack", "linked list", "memory pool"],
     "license": "MIT",
     "development": {
       "silentbicycle/greatest": "*"
     },
     "dependencies": {
       "goodcleanfun/memory_pool": "*",
-      "goodcleanfun/threading": "*"
     },
     "src": [
       "src/stack.h"
     ]
-    
   }
