@@ -1,6 +1,6 @@
 {
     "name": "stack",
-    "version": "0.5.0",
+    "version": "0.6.0",
     "repo": "goodcleanfun/stack",
     "description": "A memory-pooled generic stack implementation using a linked list",
     "keywords": ["stack", "linked list", "memory pool"],
