@@ -5,7 +5,6 @@
 #include <stdbool.h>
 #include <string.h>
 
-#include "threading/threading.h"
 #include "greatest/greatest.h"
 
 #define STACK_NAME stack_uint32
