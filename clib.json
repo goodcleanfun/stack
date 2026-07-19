@@ -9,7 +9,6 @@
       "silentbicycle/greatest": "*"
     },
     "dependencies": {
-      "goodcleanfun/bit_utils": "*",
       "goodcleanfun/memory_pool": "*"
     },
     "src": [
